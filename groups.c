@@ -142,14 +142,22 @@ int main(int argc, char *argv[]) {
             while (fscanf(uf, "%d %s", &timestamp, text) == 2) {
                 /* We must write timestamp & text into pipe in a structured way. 
                    We must ensure we write exactly 256 bytes each time (for boundary). */
+char buffer[MAX_TEXT_SIZE + 50]; // Ensure extra space for formatting
+memset(buffer, 0, sizeof(buffer)); // Clear buffer to prevent garbage data
 
-                char buffer[256];
-                memset(buffer, 0, sizeof(buffer));
                 /* Format: timestamp user_index actual_text ... 
                    or we can store them as a small struct. We'll do simple text: 
                    e.g. "timestamp userIndex text" 
                 */
-                snprintf(buffer, sizeof(buffer), "%d %d %s", timestamp, i, text);
+char safe_text[MAX_TEXT_SIZE];
+strncpy(safe_text, text, sizeof(safe_text) - 1); // Ensure null-termination
+safe_text[sizeof(safe_text) - 1] = '\0'; // Null-terminate to prevent overflow
+
+int written = snprintf(buffer, sizeof(buffer), "%d %d %s", timestamp, i, safe_text);
+if (written < 0 || written >= sizeof(buffer)) {
+    fprintf(stderr, "Error: Message formatting may be truncated.\n");
+    exit(EXIT_FAILURE);
+}
 
                 /* Write to pipe */
                 if (write(pipes[i][1], buffer, sizeof(buffer)) < 0) {
@@ -220,7 +228,10 @@ int main(int argc, char *argv[]) {
                 int ts, usr;
                 char msgText[256];
                 memset(msgText, 0, sizeof(msgText));
-                sscanf(buffer, "%d %d %s", &ts, &usr, msgText);
+if (sscanf(buffer, "%d %d %255s", &ts, &usr, msgText) != 3) {
+    fprintf(stderr, "Error parsing message from user %d\n", usr);
+    continue;
+}
 
                 /* (E) Send chat to validation */
                 Message chatMsg;
