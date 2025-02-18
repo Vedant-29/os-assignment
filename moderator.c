@@ -51,15 +51,15 @@ int main(int argc, char *argv[]) {
        We'll assume the user gave us the same input again, or we just parse it as done in app. 
        For brevity, let's do it quickly: 
     */
-    char testcase_folder[64];
-    snprintf(testcase_folder, sizeof(testcase_folder), "testcases_%s", argv[1]);
+    char testcase_folder[128];
+    snprintf(testcase_folder, sizeof(testcase_folder), "./testcase_%s", argv[1]);
 
-    char input_file_path[128];
+    char input_file_path[256];
     snprintf(input_file_path, sizeof(input_file_path), "%s/input.txt", testcase_folder);
 
     FILE *fp = fopen(input_file_path, "r");
     if (!fp) {
-        perror("fopen input.txt in moderator");
+        perror("Error in fopen input.txt in moderator");
         exit(EXIT_FAILURE);
     }
     int n, validation_key, app_key, moderator_key, violation_threshold;
