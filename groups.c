@@ -239,7 +239,7 @@ if (msgsnd(val_msqid, &userMsg, sizeof(userMsg) - sizeof(long), 0) == -1) {
                 char msgText[256];
                 memset(msgText, 0, sizeof(msgText));
 if (sscanf(buffer, "%d %d %255s", &ts, &usr, msgText) != 3) {
-    fprintf(stderr, "Error parsing message from user %d\n", usr);
+    fprintf(stderr, "Error parsing message from user %d: %s\n", usr, buffer);
     continue;
 }
 
@@ -251,8 +251,9 @@ if (sscanf(buffer, "%d %d %255s", &ts, &usr, msgText) != 3) {
                 strncpy(chatMsg.mtext, msgText, sizeof(chatMsg.mtext)-1);
                 chatMsg.modifyingGroup = group_index;
 
-                /* We'll ignore partial error handling for brevity */
-                msgsnd(val_msqid, &chatMsg, sizeof(chatMsg) - sizeof(chatMsg.mtype), 0);
+                if (msgsnd(val_msqid, &chatMsg, sizeof(chatMsg) - sizeof(chatMsg.mtype), 0) == -1) {
+                    perror("msgsnd chat message");
+                }
 
                 /* (F) Also send to moderator */
                 /* We could send the same structure, or a simpler one. Let's reuse Message for demonstration. */

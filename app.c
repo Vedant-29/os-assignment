@@ -58,7 +58,7 @@ char group_files[MAX_GROUPS][256]; // Increased buffer size
             fclose(fp);
             exit(EXIT_FAILURE);
         }
-int written = snprintf(group_files[i], sizeof(group_files[i]), "%s/%s", testcase_folder, group_file_name);
+int written = snprintf(group_files[i], sizeof(group_files[i]), "testcase_%s/%s", argv[1], group_file_name);
 if (written < 0 || written >= sizeof(group_files[i])) {
     fprintf(stderr, "Error: Group file path too long, truncation occurred.\n");
     fclose(fp);
