@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 
     char *group_file = argv[1];
     int group_index = atoi(argv[2]);
-    // char *testcase = argv[3];  // not always used here
+    char *testcase_number = argv[3]; // Assuming argv[3] is the testcase number
     int validation_key = atoi(argv[4]);
     int app_key = atoi(argv[5]);
     int moderator_key = atoi(argv[6]);
@@ -67,6 +67,9 @@ int main(int argc, char *argv[]) {
     char user_files[MAX_USERS][128];
     for(int i = 0; i < initial_users; i++){
         fscanf(gf, "%s", user_files[i]);
+        char user_file_path[256];
+        snprintf(user_file_path, sizeof(user_file_path), "testcase_%s/%s", testcase_number, user_files[i]);
+        printf("Attempting to open user file: %s\n", user_file_path); // Debugging output
     }
     fclose(gf);
 
@@ -131,8 +134,13 @@ int main(int argc, char *argv[]) {
             close(pipes[i][0]); // child won't read from pipe, only write
 
             /* Open user's file and read lines (timestamp + message) */
-            FILE *uf = fopen(user_files[i], "r");
+            char user_file_path[256];
+            snprintf(user_file_path, sizeof(user_file_path), "testcase_%s/%s", testcase_number, user_files[i]);
+            printf("Attempting to open user file: %s\n", user_file_path); // Debugging output
+
+            FILE *uf = fopen(user_file_path, "r");
             if (!uf) {
+                fprintf(stderr, "Error opening user file: %s\n", user_file_path);
                 perror("fopen user_file");
                 exit(EXIT_FAILURE);
             }
@@ -184,9 +192,11 @@ if (written < 0 || written >= sizeof(buffer)) {
             userMsg.user = i;      // user index
             memset(userMsg.mtext, 0, sizeof(userMsg.mtext));
             userMsg.modifyingGroup = group_index;
-            if (msgsnd(val_msqid, &userMsg, sizeof(userMsg) - sizeof(userMsg.mtype), 0) == -1) {
-                perror("msgsnd new user");
-            }
+if (msgsnd(val_msqid, &userMsg, sizeof(userMsg) - sizeof(long), 0) == -1) {
+    perror("msgsnd new user");
+    exit(EXIT_FAILURE);
+}
+
         }
     }
 
