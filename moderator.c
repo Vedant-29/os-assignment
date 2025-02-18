@@ -52,10 +52,10 @@ int main(int argc, char *argv[]) {
        For brevity, let's do it quickly: 
     */
     char testcase_folder[64];
-    snprintf(testcase_folder, sizeof(testcase_folder), "testcases_%s", argv[1]);
+snprintf(testcase_folder, sizeof(testcase_folder), "./testcase_%s", argv[1]);
 
     char input_file_path[128];
-    snprintf(input_file_path, sizeof(input_file_path), "%s/input.txt", testcase_folder);
+snprintf(input_file_path, sizeof(input_file_path), "%s/input.txt", testcase_folder);
 
     FILE *fp = fopen(input_file_path, "r");
     if (!fp) {
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 
     /* We also must read filtered_words.txt to build a list of restricted words. */
     char filtered_path[128];
-    snprintf(filtered_path, sizeof(filtered_path), "%s/filtered_words.txt", testcase_folder);
+snprintf(filtered_path, sizeof(filtered_path), "%s/filtered_words.txt", testcase_folder);
     FILE *fwords = fopen(filtered_path, "r");
     if (!fwords) {
         perror("fopen filtered_words.txt");
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
     fclose(fwords);
 
     /* Setup message queue for reading from groups */
-    int mod_msqid = msgget(moderator_key, 0666);
+    int mod_msqid = msgget(moderator_key, IPC_CREAT | 0666);
     if (mod_msqid < 0) {
         perror("msgget moderator");
         exit(EXIT_FAILURE);

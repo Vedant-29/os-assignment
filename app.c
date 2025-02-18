@@ -28,13 +28,17 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    /* Build path to input.txt */
+    /* Build path to input.txt */    
     char testcase_folder[50];
-    snprintf(testcase_folder, sizeof(testcase_folder), "testcases_%s", argv[1]);
+ snprintf(testcase_folder, sizeof(testcase_folder),
+             "testcase_%s", argv[1]);
 
     char input_file_path[128];
-    snprintf(input_file_path, sizeof(input_file_path), "%s/input.txt", testcase_folder);
+ snprintf(input_file_path, sizeof(input_file_path),
+             "./%s/input.txt",
+             testcase_folder);
 
+             
     FILE *fp = fopen(input_file_path, "r");
     if (!fp) {
         perror("fopen input.txt");
