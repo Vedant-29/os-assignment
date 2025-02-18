@@ -32,6 +32,8 @@ typedef struct {
     int removeUser;    /* 1 if user is to be removed, 0 otherwise */
 } ModMessage;
 
+static int group_user_count[MAX_GROUPS] = {0};  // Track users per group
+
 int main(int argc, char *argv[]) {
     if (argc != 8) {
         /* Expecting:
@@ -68,7 +70,7 @@ int main(int argc, char *argv[]) {
     for(int i = 0; i < initial_users; i++){
         fscanf(gf, "%s", user_files[i]);
         char user_file_path[256];
-        snprintf(user_file_path, sizeof(user_file_path), "testcase_%s/%s", testcase_number, user_files[i]);
+snprintf(user_file_path, sizeof(user_file_path), "testcase_%s/%s", testcase_number, user_files[i]);
         printf("Attempting to open user file: %s\n", user_file_path); // Debugging output
     }
     fclose(gf);
@@ -78,6 +80,11 @@ int main(int argc, char *argv[]) {
     int val_msqid = msgget(validation_key, 0666);
     if (val_msqid < 0) {
         perror("msgget validation");
+        exit(EXIT_FAILURE);
+    }
+
+    if (val_msqid == -1) {
+        fprintf(stderr, "Error: Message queue for validation failed\n");
         exit(EXIT_FAILURE);
     }
 
@@ -192,11 +199,18 @@ if (written < 0 || written >= sizeof(buffer)) {
             userMsg.user = i;      // user index
             memset(userMsg.mtext, 0, sizeof(userMsg.mtext));
             userMsg.modifyingGroup = group_index;
-if (msgsnd(val_msqid, &userMsg, sizeof(userMsg) - sizeof(long), 0) == -1) {
-    perror("msgsnd new user");
-    exit(EXIT_FAILURE);
-}
 
+            if (group_user_count[group_index] >= MAX_USERS) {
+                fprintf(stderr, "Error: Cannot add more users to group %d (limit reached)\n", group_index);
+                exit(EXIT_FAILURE);
+            }
+
+            if (msgsnd(val_msqid, &userMsg, sizeof(userMsg) - sizeof(userMsg.mtype), 0) == -1) {
+                perror("msgsnd new user");
+                exit(EXIT_FAILURE);
+            }
+
+            group_user_count[group_index]++;  // Increase user count
         }
     }
 
@@ -251,8 +265,14 @@ if (sscanf(buffer, "%d %d %255s", &ts, &usr, msgText) != 3) {
                 strncpy(chatMsg.mtext, msgText, sizeof(chatMsg.mtext)-1);
                 chatMsg.modifyingGroup = group_index;
 
-                if (msgsnd(val_msqid, &chatMsg, sizeof(chatMsg) - sizeof(chatMsg.mtype), 0) == -1) {
+                if (chatMsg.mtype <= 0) {
+                    fprintf(stderr, "Error: Invalid message type (%ld)\n", chatMsg.mtype);
+                    exit(EXIT_FAILURE);
+                }
+
+                if (msgsnd(val_msqid, &chatMsg, sizeof(chatMsg) - sizeof(long), 0) == -1) {
                     perror("msgsnd chat message");
+                    exit(EXIT_FAILURE);
                 }
 
                 /* (F) Also send to moderator */

@@ -116,6 +116,9 @@ if (written < 0 || written >= sizeof(group_files[i])) {
             /* Parent just stores PID */
             group_pids[i] = pid;
         }
+
+        // sleep(1);
+        printf("Spawned group %d\n", i);
     }
 
     int active_groups = n;
